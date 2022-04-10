@@ -44,3 +44,9 @@ CREATE TABLE IF NOT EXISTS content.person_film_work (
     role TEXT NOT NULL,
     created timestamp with time zone
 );
+
+CREATE UNIQUE INDEX film_work_pkey ON content.film_work USING btree (id);
+CREATE UNIQUE INDEX genre_film_work_pkey ON content.genre_film_work USING btree (id);
+CREATE UNIQUE INDEX genre_pkey ON content.genre USING btree (id);
+CREATE UNIQUE INDEX person_pkey ON content.person USING btree (id);
+CREATE UNIQUE INDEX person_film_work_pkey ON content.person_film_work USING btree (id);
