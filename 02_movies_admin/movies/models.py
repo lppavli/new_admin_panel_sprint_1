@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
+from django.db.models import UniqueConstraint
 
 
 class TimeStampedMixin(models.Model):
@@ -67,6 +68,12 @@ class GenreFilmwork(models.Model):
         db_table = "content\".\"genre_film_work"
         verbose_name = _('Genre of filmwork')
         verbose_name_plural = _('Genres of filmwork')
+        indexes = [
+            models.Index(fields=['film_work_id', 'genre_id'], name='film_work_genre'),
+        ]
+        constraints = [
+            UniqueConstraint(fields=['film_work_id', 'genre_id'], name='film_work_genre'),
+        ]
 
 
 class Person(UUIDMixin, TimeStampedMixin):
@@ -82,9 +89,14 @@ class Person(UUIDMixin, TimeStampedMixin):
 
 
 class PersonFilmWork(models.Model):
+    class Role(models.TextChoices):
+        DIRECTOR = 'director', _('Director')
+        WRITER = 'writer', _('Writer')
+        ACTOR = 'actor'. _('actor')
     film_work = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
     person = models.ForeignKey('Person', on_delete=models.CASCADE)
-    role = models.TextField('role', null=True)
+    role = models.CharField(max_length=10,
+                            choices=Role.choices)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -94,3 +106,9 @@ class PersonFilmWork(models.Model):
         db_table = "content\".\"person_film_work"
         verbose_name = _('Person of filmwork')
         verbose_name_plural = _('Persons of filmwork')
+        indexes = [
+            models.Index(fields=['film_work_id', 'person_id', 'role'], name='film_work_person_role'),
+        ]
+        constraints = [
+            UniqueConstraint(fields=['film_work_id', 'person_id', 'role'], name='film_work_person_role'),
+        ]

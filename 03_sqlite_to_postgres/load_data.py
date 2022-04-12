@@ -17,7 +17,7 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
     curs = sqlite_conn.cursor()
 
     curs.execute("SELECT * FROM film_work")
-    movies = [Movie(*row) for row in curs.fetchall()]
+    movies = [Movie(*row) for row in curs.fetchmany(size=PAGE_SIZE)]
 
     curs.execute("SELECT * FROM genre")
     styles = [Style(*row) for row in curs.fetchall()]
