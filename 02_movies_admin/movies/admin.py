@@ -21,7 +21,7 @@ class GenreAdmin(admin.ModelAdmin):
 class FilmworkAdmin(admin.ModelAdmin):
     inlines = (GenreFilmworkInline, PersonFilmworkInline,)
     list_display = ('title', 'type', 'creation_date', 'rating', 'get_genres',)
-
+    list_prefetch_related = ('genres', 'persons')
     def get_queryset(self, request):
         queryset = (
             super().get_queryset(request).prefetch_related(*self.list_prefetch_related)
@@ -29,7 +29,7 @@ class FilmworkAdmin(admin.ModelAdmin):
         return queryset
 
     def get_genres(self, obj):
-        return ','.join([genre.title for genre in obj.genres.all()])
+        return ','.join([genre.name for genre in obj.genres.all()])
 
     get_genres.short_description = 'Жанры фильма'
 
