@@ -1,5 +1,7 @@
+import os
 import sqlite3
 import psycopg2
+from dotenv import load_dotenv
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor, execute_batch
 
@@ -17,19 +19,55 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
     curs = sqlite_conn.cursor()
 
     curs.execute("SELECT * FROM film_work")
-    movies = [Movie(*row) for row in curs.fetchmany(size=PAGE_SIZE)]
+    movies = []
+    while True:
+        movies_data = curs.fetchmany(PAGE_SIZE)
+        if not movies_data:
+            break
+        else:
+            movies_list = [Movie(*row) for row in movies_data]
+            movies.extend(movies_list)
 
     curs.execute("SELECT * FROM genre")
-    styles = [Style(*row) for row in curs.fetchall()]
+    styles = []
+    while True:
+        styles_data = curs.fetchmany(PAGE_SIZE)
+        if not styles_data:
+            break
+        else:
+            styles_list = [Style(*row) for row in styles_data]
+            styles.extend(styles_list)
 
     curs.execute("SELECT * FROM genre_film_work")
-    styles_movies = [StyleMovie(*row) for row in curs.fetchall()]
+    styles_movies = []
+    while True:
+        styles_movies_data = curs.fetchmany(PAGE_SIZE)
+        if not styles_movies_data:
+            break
+        else:
+            styles_movies_list = [StyleMovie(*row) for row in styles_movies_data]
+            styles_movies.extend(styles_movies_list)
 
     curs.execute("SELECT * FROM person")
-    people = [People(*row) for row in curs.fetchall()]
+    people = []
+    while True:
+        people_data = curs.fetchmany(PAGE_SIZE)
+        if not people_data:
+            break
+        else:
+            people_list = [People(*row) for row in people_data]
+            people.extend(people_list)
 
     curs.execute("SELECT * FROM person_film_work")
-    people_movie = [PeopleMovie(*row) for row in curs.fetchall()]
+    people_movie = []
+    while True:
+        people_movie_data = curs.fetchmany(PAGE_SIZE)
+        if not people_movie_data:
+            break
+        else:
+            people_movie_list = [PeopleMovie(*row) for row in people_movie_data]
+            people_movie.extend(people_movie_list)
+    curs.close()
 
     # загружаем данные в Postgres
 
@@ -60,9 +98,17 @@ def load_from_sqlite(connection: sqlite3.Connection, pg_conn: _connection):
     insert_data = [(pm.id, pm.film_work_id, pm.person_id, pm.role, pm.created_at) for pm in people_movie]
     execute_batch(pg_conn.cursor(), query, insert_data, page_size=PAGE_SIZE)
     pg_conn.commit()
+    pg_conn.cursor().close()
 
 
 if __name__ == '__main__':
-    dsl = {'dbname': 'movies_database', 'user': 'app', 'password': '123qwe', 'host': '127.0.0.1', 'port': 5432}
+    load_dotenv()
+    dsl = {
+        'dbname': os.getenv('DB_NAME', 'movies_database'),
+        'user': os.getenv('DB_USER', 'app'),
+        'password': os.getenv('DB_PASSWORD', '123qwe'),
+        'host': os.getenv('DB_HOST', "127.0.0.1"),
+        'port': os.getenv('DB_PORT', 5432),
+    }
     with sqlite3.connect('db.sqlite') as sqlite_conn, psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
         load_from_sqlite(sqlite_conn, pg_conn)
